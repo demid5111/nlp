@@ -19,7 +19,7 @@ import os
 import codecs
 from bs4 import UnicodeDammit
 import operator
-from collect_info_for_lda import collectInfo
+# from collect_info_for_lda import collectInfo
 import shelve
 NUM_TOPICS = 20
 
@@ -62,7 +62,7 @@ def adoptText(text):
                 "чем", "через", "что", "что-то", "чтоб", "чтобы", "чуть",
                 "чьё", "чья", "эта", "эти", "это", "эту", "этого", "этом",
                 "этот","к"]
-
+  morph = pymorphy2.MorphAnalyzer()
   stop_string = ":.-()!,[]'\"|"
   res_list = []
   for x in text.split():
@@ -86,28 +86,30 @@ def calculateExperts(text,LIMIT_RETURN=10):
     authors = d['authors']
     result_list = d['result_list']
   except KeyError:
-    result_list,authors = collectInfo()
-    d['authors'] = authors
-    d['result_list'] = result_list
+    print "no such key :("
+    # result_list,authors = collectInfo()
+    # d['authors'] = authors
+    # d['result_list'] = result_list
 
   if 'sample.dict' in os.listdir('.'):
     dictionary = corpora.Dictionary.load('sample.dict')
   else:
-    dictionary = corpora.Dictionary(result_list)
-    dictionary.save('sample.dict') # store the dictionary, for future reference
+    print "no sample dic :("
+    # dictionary = corpora.Dictionary(result_list)
+    # dictionary.save('sample.dict') # store the dictionary, for future reference
 
   
 
   if 'hse_model.lda' in os.listdir('.'):
     lda = models.LdaModel.load('hse_model.lda')
   else:
-    
-    corpus = [dictionary.doc2bow(text) for text in result_list[:-1]]
-    corpora.MmCorpus.serialize('sample.mm', corpus) # store to disk, for later use
-    tfidf = models.TfidfModel(corpus)
-    corpus_tfidf = tfidf[corpus]
-    lda = models.LdaModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
-    lda.save('hse_model.lda')
+    print "no hse_model.lda :("
+    # corpus = [dictionary.doc2bow(text) for text in result_list[:-1]]
+    # corpora.MmCorpus.serialize('sample.mm', corpus) # store to disk, for later use
+    # tfidf = models.TfidfModel(corpus)
+    # corpus_tfidf = tfidf[corpus]
+    # lda = models.LdaModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
+    # lda.save('hse_model.lda')
 
   # lda.print_topics(20) #shows words and probability of the word in theme
   # lda = LdaModel(corpus, num_topics=NUM_TOPICS, alpha='auto', eval_every=5)
