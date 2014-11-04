@@ -61,18 +61,23 @@ def collectInfo ():
 	isAuthor = re.compile('^Author:\s*', re.IGNORECASE)
 	isPubList = False
 	isPub = re.compile('^\thttp://publications.hse.ru/view/.*', re.IGNORECASE)
-	fileArr = open("logfile.txt","r").readlines()
+	fileArr = open("logfile2.txt","r").readlines()
 	author_name = ""
 	for line in fileArr:
 		if isAuthor.match(line):
 			lineArr = line.split(":")[-1].split()
 			#print lineArr
-			
-			for l in lineArr:
-				if len(l) > 3:
-					print l.lower()
-					author_name = l.lower()
-					break
+			lineArr = line.split()
+			authorUri = lineArr[-1]
+			author_name = ' '.join(lineArr[1:4])
+			author_name = UnicodeDammit(author_name).unicode_markup
+			# print author_name
+			# break
+			# for l in lineArr:
+			# 	if len(l) > 3:
+			# 		print l.lower()
+			# 		author_name = l.lower()
+			# 		break
 			if author_name == "":
 				isPubList = False
 				continue
@@ -86,7 +91,8 @@ def collectInfo ():
 					if pub not in titles_dic.keys():
 						titles_dic[pub] = []
 					if author_name not in titles_dic[pub]:
-						titles_dic[pub].append(UnicodeDammit(author_name).unicode_markup)
+						titles_dic[pub].append(authorUri)
+						# print UnicodeDammit(author_name).unicode_markup
 				
 	result_list = []
 	authors = []
