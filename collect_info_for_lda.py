@@ -99,12 +99,12 @@ def collectInfo ():
 	for uri in titles_dic.keys():
 		#print uri
 		collected_info = []
-		artice = session.query(HseArticle)\
+		article = session.query(HseArticle)\
 												.filter(HseArticle.uri == uri)\
 												.first()
 		stop_string = ":.-()!,[]'\"|"
 		abstr_list = []
-		for x in artice.abstr.split():
+		for x in article.abstr.split():
 			if x not in words:
 				x = x.strip(stop_string).lower()
 				abstr_list.append(morph.parse(UnicodeDammit(x).unicode_markup)[0].normal_form)
@@ -112,32 +112,40 @@ def collectInfo ():
 
 		
 		keyword_list = []
-		for x in artice.keyword.split(";"):
+		for x in article.keyword.split(";"):
 			for y in x.split(" "):
 				if y not in words:
 					y = y.strip(stop_string).lower()
 					keyword_list.append(morph.parse(UnicodeDammit(y).unicode_markup)[0].normal_form)
 
 		title_list = []
-		for x in artice.title.split():
+		for x in article.title.split():
 			if x not in words:
 				x = x.strip(stop_string).lower()
 				title_list.append(morph.parse(UnicodeDammit(x).unicode_markup)[0].normal_form)
 
 		elib_list = []
-		for x in artice.elib.split():
+		for x in article.elib.split():
 			if x not in words:
 				x = x.strip(stop_string).lower()
 				elib_list.append(morph.parse(UnicodeDammit(x).unicode_markup)[0].normal_form)
 
 		interest_list = []
-		for x in artice.interest.split():
+		for x in article.interest.split():
 			if x not in words:
 				x = x.strip(stop_string).lower()
 				interest_list.append(morph.parse(UnicodeDammit(x).unicode_markup)[0].normal_form)
 
 		author_list = []
-		author_list.extend(titles_dic[uri])	
+		for x in article.authors.split():
+			if x not in words:
+				x = x.strip(stop_string).lower()
+				author_list.append(x)
+		# author_list.extend(titles_dic[uri])	
+
+		# session.commit()
+		# article.authors = " ".join(titles_dic[uri])
+		# session.commit()
 
 		collected_info.extend(abstr_list)
 		collected_info.extend(keyword_list)

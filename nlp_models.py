@@ -18,7 +18,7 @@ class HseArticle(Base):
 	keyword = Column(String(512),default="",nullable = False)
 	title = Column(String(512),default="",nullable = False)
 	abstr = Column(String(512),default="",nullable = False)
-
+	authors = Column(String(1024),default="",nullable=False)
 	def __repr__(self):
 		return "<HseArticle title='{}'>".format(self.title)
 
