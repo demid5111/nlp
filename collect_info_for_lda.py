@@ -134,6 +134,7 @@ def collectInfo ():
 		for x in article.interest.split():
 			if x not in words:
 				x = x.strip(stop_string).lower()
+
 				interest_list.append(morph.parse(UnicodeDammit(x).unicode_markup)[0].normal_form)
 
 		author_list = []
