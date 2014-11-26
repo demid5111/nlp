@@ -6,7 +6,7 @@ import re
 import shelve
 #import pymorphy2
 #from collect_info_for_lda import collectInfo
-import codecs
+#import codecs
 import MySQLdb as sql
 #morph = pymorphy2.MorphAnalyzer()
 
