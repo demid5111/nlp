@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Unicode
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+mysqldb://root:pass@localhost/nlp')
+engine = create_engine('mysql+mysqldb://root:pass@localhost/nlp', encoding='utf8')
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()

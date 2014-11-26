@@ -2,18 +2,11 @@
 
 #from nlp_models import session,HseArticle
 import re
-#from bs4 import UnicodeDammit
 import shelve
-#import pymorphy2
-#from collect_info_for_lda import collectInfo
-#import codecs
 import MySQLdb as sql
-#morph = pymorphy2.MorphAnalyzer()
 
-# collectInfo()
 d = shelve.open('categories.list')
 
-#results = session.query(HseArticle).all();
 total_categories = set([])
 
 
@@ -22,9 +15,7 @@ cursor = db.cursor()
 sql = """SELECT interest, elib, keyword FROM hse_article"""
 cursor.execute(sql)
 data =  cursor.fetchall()
-#for rec in data:
-#    interest1, elib1, keyword1 = rec
-#    print interest1, elib1, keyword1
+
 db.close()
 
 for article in data:

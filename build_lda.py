@@ -1,24 +1,17 @@
-import sys
-import operator
-
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
                      level=logging.INFO)
 from gensim import corpora, models, similarities
 from gensim.models.ldamodel import LdaModel
-import pymorphy2
-import re
-import os
-import codecs
-from bs4 import UnicodeDammit
-import operator
-from collect_info_for_lda import collectInfo
+
+from collect_info_for_lda import collectInfo2
 import shelve
 NUM_TOPICS = 20
 
 d = shelve.open('authors.list')
-result_list,authors = collectInfo()
-d['authors'] = authors
+# result_list,authors = collectInfo()
+result_list = collectInfo2()
+print result_list
 d['result_list'] = result_list
 
 dictionary = corpora.Dictionary(result_list)

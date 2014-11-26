@@ -1,13 +1,12 @@
- # -*- coding: latin-1 -*-
-from bs4 import BeautifulSoup
-from nlp_models import session, HseArticle, HseAuthor
+# -*- coding: utf-8 -*-
+from nlp_models import session, HseArticle
 from sqlalchemy import distinct
-import codecs
 import re
 import pymorphy2
+import MySQLdb
 from bs4 import UnicodeDammit
-def collectInfo ():
-	words = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "b",
+
+words = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "b",
                "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", 
                "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
                 "а","б","в","г","д","е", "ё","ж","з","и","л","м","н","о",
@@ -42,20 +41,16 @@ def collectInfo ():
                 "чем", "через", "что", "что-то", "чтоб", "чтобы", "чуть",
                 "чьё", "чья", "эта", "эти", "это", "эту", "этого", "этом",
                 "этот","к"]
+words = [UnicodeDammit(word).unicode_markup for word in words]
+
+#Deprecated functionality
+def collectInfo ():
+	
  	morph = pymorphy2.MorphAnalyzer()
 	titles = session.query(distinct(HseArticle.title)).all()
 	print "len of distinct(titles) : " + str(len(titles))
 	titles_list = [x[0] for x in titles]
-	# for x in titles:
-	# 	print type(x[0])
-		#print codecs.encode(x[0],'koi8_r')
-		#print codecs.encode(x[0].decode('latin_1').encode('utf-8'),'koi8_r')
-	results = session.query(HseArticle.id, HseArticle.interest,HseArticle.elib,\
-							HseArticle.keyword, HseArticle.title,\
-							HseArticle.abstr)\
-					.filter(HseArticle.title.in_(titles_list))\
-					.all()
-	print "len of distinct articles(by title) : " + str(len(results))
+	
 
 	titles_dic = {}
 	isAuthor = re.compile('^Author:\s*', re.IGNORECASE)
@@ -159,7 +154,72 @@ def collectInfo ():
 		result_list.append(collected_info)
 	return result_list,authors
 	#print author_list
-# print len(articles)
+
+def collectInfo2 ():
+	morph = pymorphy2.MorphAnalyzer()
+	titles = session.query(distinct(HseArticle.title)).all()
+	titles_list = [x[0] for x in titles]
+	
+	titles_dic = {}
+	isAuthor = re.compile('^Author:\s*', re.IGNORECASE)
+	isPubList = False
+	isPub = re.compile('^\thttp://publications.hse.ru/view/.*', re.IGNORECASE)
+	fileArr = open("logfile2.txt","r").readlines()
+	author_name = ""
+	for line in fileArr:
+		if isAuthor.match(line):
+			lineArr = line.split(":")[-1].split()
+			#print lineArr
+			lineArr = line.split()
+			authorUri = lineArr[-1]
+			author_name = ' '.join(lineArr[1:4])
+			author_name = UnicodeDammit(author_name).unicode_markup
+			
+			if author_name == "":
+				isPubList = False
+				continue
+			else:
+				isPubList = True
+		elif isPubList:
+			if isPub.match(line):
+				# print line.strip() + ' ' + author_name
+				pub = line.strip()
+				if author_name != "":
+					if pub not in titles_dic.keys():
+						titles_dic[pub] = []
+					if author_name not in titles_dic[pub]:
+						titles_dic[pub].append(authorUri)
+						# print UnicodeDammit(author_name).unicode_markup
+				
+	result_list = []
+	authors = []
+
+	db = MySQLdb.connect(host="localhost", user="root", passwd="pass", db="nlp", charset='utf8')
+	cursor = db.cursor()
+
+	for uri in titles_dic.keys():
+		
+		collected_info = []
+		author_list = []
+		sql = """SELECT abstr,keyword,title,elib,interest,authors 
+					FROM hse_article WHERE uri = "{}" """.format(uri)
+		cursor.execute(sql)
+		article = cursor.fetchall()
+		
+		for column in article:
+			
+			author_list.append(column[5].split())
+			for word in column:
+				w = re.split(';|,|\)|\(|"|\]|\[| ',word)
+				for i in w:
+					i = morph.parse(i)[0].normal_form
+					if i not in words:
+						collected_info.append(i)
+		result_list.append(collected_info)
+	db.close()
+	return result_list
+	
+
 
 if __name__=="__main__":
-	collectInfo()
+	collectInfo2()

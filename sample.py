@@ -4,23 +4,16 @@
 ##Created: 19:00 15.08.14
 ##Last modified: 22:15 12.09.14
 ###############################
-
-import sys
-import operator
-
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
                      level=logging.INFO)
 from gensim import corpora, models, similarities
 from gensim.models.ldamodel import LdaModel
 import pymorphy2
-import re
 import os
-import codecs
 from bs4 import UnicodeDammit
-import operator
-# from collect_info_for_lda import collectInfo
 import shelve
+
 NUM_TOPICS = 20
 
 # function adoptText(text)
@@ -62,6 +55,7 @@ def adoptText(text):
                 "чем", "через", "что", "что-то", "чтоб", "чтобы", "чуть",
                 "чьё", "чья", "эта", "эти", "это", "эту", "этого", "этом",
                 "этот","к"]
+  words = [UnicodeDammit(word).unicode_markup for word in words]
   morph = pymorphy2.MorphAnalyzer()
   stop_string = ":.-()!,[]'\"|"
   res_list = []
@@ -83,7 +77,7 @@ def calculateExperts(text,LIMIT_RETURN=10):
 
 
   try:
-    authors = d['authors']
+    uri2author = d['uri2author']
     result_list = d['result_list']
   except KeyError:
     print "no such key :("
@@ -120,13 +114,18 @@ def calculateExperts(text,LIMIT_RETURN=10):
   
   #TODO: comment the line below and the line with adoptText comment out
   # new_text = result_list[-2]
+  authors = set([])
+  for i in uri2author.keys():
+    authors.add(i) 
+  
   new_text = text
   real_authors = []
   #save real authors for the final check
-  for i in new_text:
-    if i in authors:
-      print "Authors: ",i
-      real_authors.append(i)
+  # for i in new_text:
+  #   i = UnicodeDammit(i).unicode_markup
+  #   if i in authors:
+  #     print "Authors: ",i
+  #     real_authors.append(i)
   # new_text = adoptText(text)
   
   doc_bow =   dictionary.doc2bow(new_text)
@@ -185,17 +184,9 @@ def calculateExperts(text,LIMIT_RETURN=10):
     print "Author: " + UnicodeDammit(uri2author[author].decode('koi8-r','ignore')).unicode_markup 
     print "uri: " + author + " prob: " + str(result_dic[author])
     auth_dic[author] = result_dic[author]
-    if author in real_authors:
-      print "Real author found ", author_rating.index(author)+1
-      try:
-        author_res = d["author_res"]
-      except KeyError:
-        author_res = {}
-        d["author_res"] = author_res
-      try:
-        author_res[author_rating.index(author)+1] += 1
-      except KeyError:
-        author_res[author_rating.index(author)+1] = 1
+    # if author in real_authors:
+    #   print "Real author found ", author_rating.index(author)+1
+    
     if i == LIMIT_RETURN-1:
       break
 
@@ -257,9 +248,10 @@ def calculateCategories(text,LIMIT_RETURN=10):
   for topic in bgw_per_topics:
     # info = texts[i]
     for probability,word in topic:
-      word = UnicodeDammit(word).unicode_markup
+      # word = UnicodeDammit(word).unicode_markup
+      
       if word in categories:
-        # print word
+        
         if i not in categories_distribution.keys():
           categories_distribution[i] = {}
         if word not in categories_distribution[i].keys():
@@ -312,7 +304,7 @@ if __name__ == "__main__":
   print "Papers to analyze: ", diff
   for i in range (0,diff):
     print "Paper #{}".format(str(i+1))
-    #calculateExperts(result_list[-i])
+    calculateExperts(result_list[-i])
     calculateCategories(result_list[-i])
 #   calculateExperts("""В последние годы в результате потепления климата на Крайнем Севере произошли значительные изменения. Ледяной покров Арктики исчезает очень быстрыми темпами1, а это означает повышение уровня морей, а также уменьшение жизненного пространства животных, прежде всего полярных медведей2. Тающий лед также влияет на существующую там дорожную и социальную инфраструктуру.
 
