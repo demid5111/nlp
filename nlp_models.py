@@ -22,13 +22,3 @@ class HseArticle(Base):
 	def __repr__(self):
 		return "<HseArticle title='{}'>".format(self.title)
 
-class HseAuthor(Base):
-	__tablename__ = 'hse_author'
-
-	id = Column(Integer, primary_key=True)
-	author_name = Column(String(512),default="",nullable = False)
-	article_id = Column(Integer,ForeignKey('hse_article.id'))
-	
-
-	def __repr__(self):
-		return "<HseAuthor author_name='{}'>".format(self.author_name)
