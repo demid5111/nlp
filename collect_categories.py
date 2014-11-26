@@ -17,7 +17,7 @@ d = shelve.open('categories.list')
 total_categories = set([])
 
 
-db = sql.connect(host="localhost", user="root", passwd="newpass", db="nlp", charset='utf8')
+db = sql.connect(host="localhost", user="root", passwd="pass", db="nlp", charset='utf8')
 cursor = db.cursor()
 sql = """SELECT interest, elib, keyword FROM hse_article"""
 cursor.execute(sql)

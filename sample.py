@@ -102,6 +102,8 @@ def calculateExperts(text,LIMIT_RETURN=10):
   # print res_size
   # res_base = res_size
   # print res_base
+
+  #load lda model from the shelve dictionary
   if 'hse_model.lda' in os.listdir('.'):
     lda = models.LdaModel.load('hse_model.lda')
   else:
@@ -120,6 +122,7 @@ def calculateExperts(text,LIMIT_RETURN=10):
   # new_text = result_list[-2]
   new_text = text
   real_authors = []
+  #save real authors for the final check
   for i in new_text:
     if i in authors:
       print "Authors: ",i
@@ -176,6 +179,8 @@ def calculateExperts(text,LIMIT_RETURN=10):
     uri2author = d['uri2author']
   except KeyError:
     print "no such key :("
+  
+  #visualize results - simple output to the console
   for author in author_rating:
     print "Author: " + UnicodeDammit(uri2author[author].decode('koi8-r','ignore')).unicode_markup 
     print "uri: " + author + " prob: " + str(result_dic[author])
@@ -199,6 +204,102 @@ def calculateExperts(text,LIMIT_RETURN=10):
   d.close()
   return auth_dic
 
+
+def calculateCategories(text,LIMIT_RETURN=10):
+
+  d = shelve.open('categories.list')
+
+
+  try:
+
+    categories = d['categories']
+
+  except KeyError:
+    print "no such key :("
+    return
+
+  if 'sample.dict' in os.listdir('.'):
+    dictionary = corpora.Dictionary.load('sample.dict')
+  else:
+    print "no sample dic :("
+    return
+
+  
+  #load lda model from the shelve dictionary
+  if 'hse_model.lda' in os.listdir('.'):
+    lda = models.LdaModel.load('hse_model.lda')
+  else:
+    print "no hse_model.lda :("
+    return
+
+ 
+  
+  #TODO: comment the line below and the line with adoptText comment out
+  # new_text = result_list[-2]
+  new_text = text
+  
+  #new_text = adoptText(text)
+  
+  doc_bow =   dictionary.doc2bow(new_text)
+  # print doc_bow
+  doc_lda = lda[doc_bow]
+  # print doc_lda #probability that text is from the exact theme
+  distribution_vec = {topicNum:probability for topicNum,probability in doc_lda}
+  
+  
+  index = 0
+  
+  
+  categories_distribution = {}
+  bgw_per_topics =  lda.show_topics(num_topics=NUM_TOPICS,num_words=7900,formatted=False)
+  
+  i = 0
+  for topic in bgw_per_topics:
+    # info = texts[i]
+    for probability,word in topic:
+      word = UnicodeDammit(word).unicode_markup
+      if word in categories:
+        # print word
+        if i not in categories_distribution.keys():
+          categories_distribution[i] = {}
+        if word not in categories_distribution[i].keys():
+          categories_distribution[i][word] = probability
+    i += 1
+  #created the dictionary:
+  # experts[num_topic][expert] = probability
+  result_dic = {}
+
+  for category in categories:
+    result = 0
+    for topic in distribution_vec:
+      
+      try:
+        result += (categories_distribution[topic][category]   #expert for the given topic
+                              * distribution_vec[topic]) #text is from the topic
+      except KeyError:
+        continue
+    if result != 0:
+      result_dic[category] = result
+  
+  categories_rating = sorted(result_dic.keys(), key = lambda x: result_dic[x],reverse=True)
+  # print author_rating
+  i = 0
+  categories_dic = {}
+  
+  
+  #visualize results - simple output to the console
+  for category in categories_rating:
+    print "category: " + category  + " prob: " + str(result_dic[category])
+    categories_dic[category] = result_dic[category]
+    
+    if i == LIMIT_RETURN-1:
+      break
+    i += 1
+
+  d.close()
+  return categories_dic
+
+
 if __name__ == "__main__":
 
   d = shelve.open('authors.list')
@@ -211,7 +312,8 @@ if __name__ == "__main__":
   print "Papers to analyze: ", diff
   for i in range (0,diff):
     print "Paper #{}".format(str(i+1))
-    calculateExperts(result_list[-i])
+    #calculateExperts(result_list[-i])
+    calculateCategories(result_list[-i])
 #   calculateExperts("""В последние годы в результате потепления климата на Крайнем Севере произошли значительные изменения. Ледяной покров Арктики исчезает очень быстрыми темпами1, а это означает повышение уровня морей, а также уменьшение жизненного пространства животных, прежде всего полярных медведей2. Тающий лед также влияет на существующую там дорожную и социальную инфраструктуру.
 
 # С другой стороны, исчезающий арктический лед открывает перед человеком новые районы для освоения и эксплуатации (как ожидается, это вызовет рост добычи энергоресурсов и прочих полезных ископаемых), а также ведет к усилению различных форм экономической деятельности, в том числе к развитию туризма. Открытие новых судоходных путей и более тонкий ледяной покров также могут повлиять на развитие межконтинентального морского транспорта при условии создания нужной инфраструктуры.
