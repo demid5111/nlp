@@ -1,5 +1,5 @@
 # -*- coding: koi8-r -*-
-from nlp_models import session, HseArticle, HseAuthor
+from nlp_models import session, HseArticle
 import urllib2
 import lxml.html
 import re
@@ -8,23 +8,14 @@ import shelve
 ##Request from DB all hse_articles
 pub_dic = {}
 article =  session.query(HseArticle).all()
-#with open("publications","w") as  f:
 for i in article:
 	if i not in pub_dic.keys():
 		pub_dic[i.uri] = i.id
-		#f.write(i.uri+",")
-
 
 author2paper = {}
 author2uri = {}
 isEn = re.compile(".*[a-zA-Z].*")
 
-# l = set([])
-# for pub in pub_dic.keys():
-# 	l.add(pub)
-# 	print pub
-# print len(pub_dic.keys())
-# print len(l)
 l = set([])
 with open('publications.txt','r') as f:
 	for url in f.readlines():
@@ -47,14 +38,15 @@ for pub in l:
 	
 	for i in authors:
 		author = i.text.encode('koi8-r','ignore')
+		if isEn.match(author):
+			print "ENGLISH " + author
+			continue
 		if author not in author2uri.keys():
 			author2uri[author] = i.get('href')
 		if author not in author2paper.keys():
 			# print author
 			# print i.get('href')
-			if isEn.match(author):
-				print "ENGLISH " + author
-				continue
+			
 			author2paper[author] = []
 		author2paper[author].append(pub)
 	j += 1
@@ -65,16 +57,11 @@ authors = []
 uri2author = {x:y for (y,x) in author2uri.items()}
 # print uri2author
 d = shelve.open('authors.list')
-try:
-    authors2uri = d['author2uri']
-    authors2uri = author2uri
-    uri2authors = d['uri2author']
-    uri2authors = uri2author
-except KeyError:
-    print "no such key :("
+
 d['author2uri'] = author2uri
 d['uri2author'] = uri2author
-d.close()
+d['authorUri2paper'] = author2paper
+
 for author in author2paper.keys():
 	
 	print "Author: " + author + " Uri: " + author2uri[author]
@@ -93,3 +80,7 @@ for author in author2paper.keys():
 # for i in authors:
 # 	print i
 
+print "author2uri :"+ len(d['author2uri'])
+print "uri2author :"+ len(d['uri2author'])
+
+d.close()
