@@ -1,17 +1,18 @@
- # -*- coding: latin-1 -*-
+ # -*- coding: utf-8 -*-
 ###############################
 ##Author: Demidovskij A.
 ##Created: 19:00 15.08.14
 ##Last modified: 22:15 12.09.14
 ###############################
 import logging
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
-                     level=logging.INFO)
+#logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
+  #                   level=logging.INFO)
 from gensim import corpora, models, similarities
 from gensim.models.ldamodel import LdaModel
 import pymorphy2
+import sys
 import os
-from bs4 import UnicodeDammit
+#from bs4 import UnicodeDammit
 import shelve
 
 NUM_TOPICS = 25
@@ -55,19 +56,19 @@ def adoptText(text):
                 "чем", "через", "что", "что-то", "чтоб", "чтобы", "чуть",
                 "чьё", "чья", "эта", "эти", "это", "эту", "этого", "этом",
                 "этот","к"]
-  words = [UnicodeDammit(word).unicode_markup for word in words]
+  words = [word.decode('utf-8') for word in words]
   morph = pymorphy2.MorphAnalyzer()
   stop_string = ":.-()!,[]'\"|"
   res_list = []
   for x in text.split():
-    x = UnicodeDammit(x).unicode_markup
+    #x = UnicodeDammit(x).unicode_markup
+    x = x.decode('utf-8')
     x = x.strip(stop_string).lower()
     if x not in words:
       
-      res_list.append(morph.parse(UnicodeDammit(x)\
-                                  .unicode_markup)[0].normal_form)
-  print len(text)
-  print len(" ".join(res_list))
+      res_list.append(morph.parse(x)[0].normal_form)
+  #/#print len(text)
+  #/#print len(" ".join(res_list))
   return res_list
 
 # function calculateExperts(text)
@@ -76,8 +77,10 @@ def adoptText(text):
 # {expert_name:expert_probability}
 # built by the LDA model
 def calculateExperts(text,LIMIT_RETURN=10):
+  #temp = sys.stdout 
+  #sys.stdout = open('log.txt', 'a')
 
-  d = shelve.open('authors.list')
+  d = shelve.open('/home/nick/public_html/test.sapienta.ru/public/cgi-glob/nlp/authors.list')
 
 
   try:
@@ -118,7 +121,7 @@ def calculateExperts(text,LIMIT_RETURN=10):
   
   #TODO: comment the line below and the line with adoptText comment out
   # new_text = result_list[-2]
-  lda.print_topics(25)
+  #/#lda.print_topics(25)
   authors = set([])
   for i in uri2author.keys():
     authors.add(i) 
@@ -137,7 +140,9 @@ def calculateExperts(text,LIMIT_RETURN=10):
   #print doc_bow
   doc_lda = lda[doc_bow]
   # print doc_lda #probability that text is from the exact theme
-  distribution_vec = {topicNum:probability for topicNum,probability in doc_lda}
+  distribution_vec={}
+  for topicNum,probability in doc_lda:
+    distribution_vec[topicNum]=probability
   
   index = 0
   signal_w_distribution = {}
@@ -149,7 +154,7 @@ def calculateExperts(text,LIMIT_RETURN=10):
   for topic in bgw_per_topics:
     # info = texts[i]
     for probability,word in topic:
-      word = UnicodeDammit(word).unicode_markup
+      #word = UnicodeDammit(word).unicode_markup
       if word in authors:
         # print word
         if i not in experts_distribution.keys():
@@ -185,22 +190,27 @@ def calculateExperts(text,LIMIT_RETURN=10):
   
   #visualize results - simple output to the console
   for author in author_rating:
-    print "Author: " + UnicodeDammit(uri2author[author].decode('koi8-r','ignore')).unicode_markup 
-    print "uri: " + author + " prob: " + str(result_dic[author])
+    #print "Author: " + UnicodeDammit(uri2author[author].decode('koi8-r','ignore')).unicode_markup 
+    #/#print uri2author[author]
+    #/#print "uri: " + author + " prob: " + str(result_dic[author])
     auth_dic[author] = result_dic[author]
     # if author in real_authors:
     #   print "Real author found ", author_rating.index(author)+1
     
     if i == LIMIT_RETURN-1:
-      break
+        break
 
     i += 1
 
   d.close()
+  #sys.stdout.close()                # Вытолкнуть буферы на диск
+  #sys.stdout = temp
   return auth_dic
 
 
 def calculateCategories(text,LIMIT_RETURN=10):
+  #temp = sys.stdout 
+  #sys.stdout = open('log.txt', 'a')
 
   d = shelve.open('categories.list')
 
@@ -239,7 +249,9 @@ def calculateCategories(text,LIMIT_RETURN=10):
   # print doc_bow
   doc_lda = lda[doc_bow]
   # print doc_lda #probability that text is from the exact theme
-  distribution_vec = {topicNum:probability for topicNum,probability in doc_lda}
+  distribution_vec={}
+  for topicNum,probability in doc_lda:
+    distribution_vec[topicNum]=probability
   
   
   index = 0
@@ -255,7 +267,7 @@ def calculateCategories(text,LIMIT_RETURN=10):
   for topic in bgw_per_topics:
     # info = texts[i]
     for probability,word in topic:
-      # word = UnicodeDammit(word).unicode_markup
+      #word = UnicodeDammit(word).unicode_markup
       
       if word in categories:
         
@@ -284,12 +296,13 @@ def calculateCategories(text,LIMIT_RETURN=10):
         continue
     if result != 0:
       result_dic[category] = result
-  
-  tmp = {x:y for y,x in distribution_vec.items()}
-  print "Topic distribution:\n# topic \t probability"
-  for i in sorted(tmp,reverse=True):
-    print str(tmp[i]) + "\t" + str(i)
-  print "\n"
+  tmp={}
+  for y,x in distribution_vec.items():
+    tmp[x]=y
+  #/#print "Topic distribution:\n# topic \t probability"
+  #/#for i in sorted(tmp,reverse=True):
+  #/#  print str(tmp[i]) + "\t" + str(i)
+  #/#print "\n"
   categories_rating = sorted(result_dic.keys(), key = lambda x: result_dic[x],reverse=True)
   # print author_rating
   i = 0
@@ -298,7 +311,8 @@ def calculateCategories(text,LIMIT_RETURN=10):
   
   #visualize results - simple output to the console
   for category in categories_rating:
-    print "category: " + category  + " prob: " + str(result_dic[category])
+    #print "category: " + category  + " prob: " + str(result_dic[category])
+    #/#print category.encode('utf-8')
     categories_dic[category] = result_dic[category]
     
     if i == LIMIT_RETURN-1:
@@ -306,21 +320,24 @@ def calculateCategories(text,LIMIT_RETURN=10):
     i += 1
 
   d.close()
+  #sys.stdout.close()                # Вытолкнуть буферы на диск
+  #sys.stdout = temp
   return categories_dic
 
 
 if __name__ == "__main__":
-
-  d = shelve.open('authors.list')
-  result_list = d['result_list']
-  # author_res = d["author_res"]
-  # author_res = {}
-  base = 2166
-  diff = int(len(result_list) * 0.3)
-  d.close()
-  # print "Papers to analyze: ", diff
-  # for i in range (0,diff):
-  #   print "Paper #{}".format(str(i+1))
+  temp = sys.stdout 
+  sys.stdout = open('log.txt', 'a')
+  #d = shelve.open('authors.list')
+  #result_list = d['result_list']
+  ## author_res = d["author_res"]
+  ## author_res = {}
+  #base = 2166
+  #diff = int(len(result_list) * 0.3)
+  #d.close()
+  ## print "Papers to analyze: ", diff
+  ## for i in range (0,diff):
+  ##   print "Paper #{}".format(str(i+1))
   
   mystr = """
 Максимова Ольга Дмитриевна РЕВОЛЮЦИОННОЕ ПРАВОСОЗНАНИЕ КАК ИСТОЧНИК СОВЕТСКОГО ПРАВА И ЗАКОНОТВОРЧЕСТВА
@@ -360,7 +377,9 @@ if __name__ == "__main__":
 Изучение вопроса о теории правосознания в первые десятилетия после Октябрьской революции дает основание утверждать, что смысл, который вкладывался в это понятие, изменился. Термины «революционное правосознание» и «социалистическое правосознание» неравнозначны. Если в первые годы Советской власти революционное правосознание играло роль источника права в отсутствие законов, то с развитием законодательства, начиная с 1922 года, оно стало рассматриваться как один из правообразующих факторов.
 Революционное правосознание использовалось как источник советского права в первые годы после Октябрьской революции. Можно предположить, что период использования данного источника на практике прекращается с момента проведения масштабной кодификации советского права в начале 1920-х годов. Так, в статье 9 Уголовного кодекса РСФСР 1922 года устанавливалось, что назначение наказания производится судебными органами по их социалистическому правосознанию с соблюдением Руководящих начал статей настоящего кодекса. На основании этого положения уголовного закона можно утверждать, что с 1922 года революционное правосознание больше не являлось источником советского права, а стало играть под названием «социалистическое правосознание» роль элемента идеологии классового общества. То есть правосознание стало играть ту роль, которая ему обычно свойственна в развитой правовой системе. Данный тезис подтверждается и изучением взглядов видных советских теоретиков права, которые были приведены выше.
 """
-
+ 
   calculateExperts(mystr)
   calculateCategories(mystr)
+  sys.stdout.close()                # Вытолкнуть буферы на диск
+  sys.stdout = temp
 
