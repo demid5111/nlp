@@ -13,7 +13,8 @@ import pymorphy2
 import sys
 import os
 #from bs4 import UnicodeDammit
-import shelve
+import shelve, pickle
+
 
 NUM_TOPICS = 25
 
@@ -81,7 +82,13 @@ def calculateExperts(text,LIMIT_RETURN=10):
   #sys.stdout = open('log.txt', 'a')
 
   d = shelve.open('/home/nick/public_html/test.sapienta.ru/public/cgi-glob/nlp/authors.list')
-
+  d1={}
+  with open('/home/nick/public_html/test.sapienta.ru/public/cgi-glob/nlp/dict.pickle', 'rb') as f1:
+    d1 = pickle.load(f1)
+  d2={}
+  for key1 in d1:
+    key2=key1.encode('utf-8').replace('\r','')
+    d2[key2]=d1[key1]
 
   try:
     uri2author = d['uri2author']
@@ -178,8 +185,13 @@ def calculateExperts(text,LIMIT_RETURN=10):
       except KeyError:
         continue
     if result != 0:
-      result_dic[author] = result
+      try:
+        result_dic[author] = result*100.0/d2[author]
+        #print author, d2[author], result_dic[author]
+      except:
+        print "Error 01"
   author_rating = sorted(result_dic.keys(), key = lambda x: result_dic[x],reverse=True)
+
   # print author_rating
   i = 0
   auth_dic = {}
@@ -191,8 +203,8 @@ def calculateExperts(text,LIMIT_RETURN=10):
   #visualize results - simple output to the console
   for author in author_rating:
     #print "Author: " + UnicodeDammit(uri2author[author].decode('koi8-r','ignore')).unicode_markup 
-    #/#print uri2author[author]
-    #/#print "uri: " + author + " prob: " + str(result_dic[author])
+    #print uri2author[author]
+    #print author# + " prob: " + str(result_dic[author])
     auth_dic[author] = result_dic[author]
     # if author in real_authors:
     #   print "Real author found ", author_rating.index(author)+1
@@ -213,12 +225,16 @@ def calculateCategories(text,LIMIT_RETURN=10):
   #sys.stdout = open('log.txt', 'a')
 
   d = shelve.open('categories.list')
-
+  d1={}
+  with open('/home/nick/public_html/test.sapienta.ru/public/cgi-glob/nlp/dict.pickle', 'rb') as f1:
+    d1 = pickle.load(f1)
+  d2={}
+  for key1 in d1:
+    key2=key1.encode('utf-8').replace('\r','')
+    d2[key2]=d1[key1]
 
   try:
-
     categories = d['categories']
-
   except KeyError:
     print "no such key :("
     return
@@ -295,7 +311,13 @@ def calculateCategories(text,LIMIT_RETURN=10):
       except KeyError:
         continue
     if result != 0:
-      result_dic[category] = result
+      try:
+        #print category.encode('utf-8'), d2[category.encode('utf-8')]
+        result_dic[category.encode('utf-8')] = result*100.0/d2[category.encode('utf-8')]
+        #print result_dic[category.encode('utf-8')]
+      except:
+        print "Error 02", category.encode('utf-8')
+
   tmp={}
   for y,x in distribution_vec.items():
     tmp[x]=y
@@ -312,7 +334,7 @@ def calculateCategories(text,LIMIT_RETURN=10):
   #visualize results - simple output to the console
   for category in categories_rating:
     #print "category: " + category  + " prob: " + str(result_dic[category])
-    #/#print category.encode('utf-8')
+    #print category
     categories_dic[category] = result_dic[category]
     
     if i == LIMIT_RETURN-1:
@@ -326,8 +348,9 @@ def calculateCategories(text,LIMIT_RETURN=10):
 
 
 if __name__ == "__main__":
-  temp = sys.stdout 
-  sys.stdout = open('log.txt', 'a')
+  #temp = sys.stdout 
+  #sys.stdout = open('log.txt', 'a')
+
   #d = shelve.open('authors.list')
   #result_list = d['result_list']
   ## author_res = d["author_res"]
@@ -380,6 +403,6 @@ if __name__ == "__main__":
  
   calculateExperts(mystr)
   calculateCategories(mystr)
-  sys.stdout.close()                # Вытолкнуть буферы на диск
-  sys.stdout = temp
+  #sys.stdout.close()                # Вытолкнуть буферы на диск
+  #sys.stdout = temp
 
